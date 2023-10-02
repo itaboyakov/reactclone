@@ -1,0 +1,85 @@
+.app {
+    margin: 0;
+    padding: 0;
+    padding-left: 20px;
+    text-decoration: none;
+    list-style-type: none;
+    background: transparent;
+    border: none;
+    box-sizing: border-box;
+}
+.header {
+    margin-bottom: 20px;
+}
+.header .logo {
+    display: block;
+    width: 96px;
+    height: 96px;
+}
+.loading {
+    background-color: rgba(143, 142, 142, 0.3);
+    display: inline-block;
+    vertical-align: middle;
+    text-align:center;
+    margin-top: 20px;
+    width: 30%;
+    padding-top: 20px;
+    border-radius: 10px;
+    height: 40px;
+}
+.clock {
+    width: 30%;
+    text-align: center;
+    padding: 15px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+.clock .value {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 15px;
+}
+
+.clock .icon {
+    display: inline-block;
+    vertical-align: middle;
+    width: 15px;
+    height: 15px;
+    border-radius: 15px;
+}
+.clock .icon.day {
+    background-color: orange;
+}
+.clock .icon.night {
+    background-color: blue;
+}
+.lots {
+    margin-top: 40px;
+    height: 200px;
+    width: 30%;
+    display: block;
+}
+.lot {
+    display: flex; 
+    flex-direction: column; 
+    justify-content: space-between;
+    height: 50px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    padding: 10px;
+    position: relative;
+}
+h1 {
+   margin: 0; 
+}
+p {
+    margin: 0;
+}
+.price {
+    position: absolute;
+    right: 20px;  
+    margin-top: 15px;
+    font-weight: 600;
+}
