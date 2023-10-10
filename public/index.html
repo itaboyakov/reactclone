@@ -11,8 +11,8 @@
 <body>
     <div id="root"></div>
 </body>
-  <!-- <script> -->
- <script type="text/jsx"> 
+  <script>
+//  <script type="text/jsx"> 
   
     class Store {
         constructor(initialState) {
@@ -22,11 +22,9 @@
         getState() {
             return this.state
         }
-        changeState(diff) {
-            this.state = {
-                ...this.state,
-                ...(typeof diff === 'function' ? diff(this.state) : diff)
-            }
+        setState(state) {
+            this.state = (typeof state === 'function' ? state(this.state) : state)
+            
             this.listeners.forEach(listener => listener())
         }
         subscribe (listener) {
@@ -108,24 +106,49 @@
     })
     renderView(store.getState());
 
-    api.get('/lots').then((lots) => {
-        store.changeState({lots})
-
-        const onPrice = (data) => {
-            store.changeState((state) => ({
-                lots: state.lots.map((lot) => {
-                    if (lot.id === data.id) {
-                        return {
-                            ...lot,
-                            price: data.price
+    function appReducer(state, action) {
+        switch (action.type) {
+            case 'setTime':
+                return {
+                    ...state,
+                    time: action.time
+                }
+            case 'setLots':
+                return {
+                    ...state,
+                    lots: action.lots
+                }
+            case 'changeLotPrice':
+                return {
+                    ...state,
+                    lots: state.lots.map((lot) => {
+                        if (lot.id === action.id) {
+                            return {
+                                ...lot,
+                                price: action.price
+                            }
                         }
-                    }
-                    return lot
-                })
-            }))
+                        return lot
+                    })
+                }
+            default: return state 
         }
+        
+    }
+    setInterval(() => {
+        store.setState((state) => appReducer(state, {type: 'setTime', time: new Date() }))
+    }, 1000)
+
+    api.get('/lots').then((lots) => {
+        store.setState((state) => appReducer(state, {type: 'setLots', lots}))
         lots.forEach(lot => {
-            stream.subscribe(`price-${lot.id}`, onPrice)
+            stream.subscribe(`price-${lot.id}`, (data) => {
+                store.setState((state) => appReducer(state, {
+                    type: 'changeLotPrice',
+                    id: data.id, 
+                    price: data.price
+                }));
+            })
         })
     }).catch(err => console.log(err))
 
@@ -222,12 +245,6 @@
         } 
         return document.createElement(virtualNode.type);
     }
-    setInterval(() => {
-        store.changeState({
-            time: new Date()
-        })
-    })
-
 
     function Loading() {
         return <div class="loading">Loading...</div>
