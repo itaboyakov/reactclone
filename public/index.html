@@ -11,12 +11,38 @@
 <body>
     <div id="root"></div>
 </body>
-
-<script type="text/jsx"> 
-    let state = {
+  <!-- <script> -->
+ <script type="text/jsx"> 
+  
+    class Store {
+        constructor(initialState) {
+            this.state = initialState;
+            this.listeners = []
+        }
+        getState() {
+            return this.state
+        }
+        changeState(diff) {
+            this.state = {
+                ...this.state,
+                ...(typeof diff === 'function' ? diff(this.state) : diff)
+            }
+            this.listeners.forEach(listener => listener())
+        }
+        subscribe (listener) {
+            this.listeners.push(listener);
+            return () => {
+                const index = this.listeners.inexOf(listener);
+                this.listeners.splice(index,1);
+            }
+        }
+    }
+    const initialState = {
         time: new Date(),
         lots: null
     }
+    const store = new Store(initialState);
+
     const VDom = {
         createElement: (type, config, ...children) => {
             const key = config?.key || null;
@@ -77,18 +103,16 @@
             document.getElementById('root')
         );
     }
-
-    renderView(state);
+    store.subscribe(() => {
+        renderView(store.getState())
+    })
+    renderView(store.getState());
 
     api.get('/lots').then((lots) => {
-        state = {
-            ...state,
-            lots
-        }
-        renderView(state);
+        store.changeState({lots})
+
         const onPrice = (data) => {
-            state = {
-                ...state,
+            store.changeState((state) => ({
                 lots: state.lots.map((lot) => {
                     if (lot.id === data.id) {
                         return {
@@ -98,8 +122,7 @@
                     }
                     return lot
                 })
-            }
-            renderView(state);
+            }))
         }
         lots.forEach(lot => {
             stream.subscribe(`price-${lot.id}`, onPrice)
@@ -200,11 +223,9 @@
         return document.createElement(virtualNode.type);
     }
     setInterval(() => {
-        state = {
-            ...state,
+        store.changeState({
             time: new Date()
-        }
-        renderView(state);
+        })
     })
 
 
@@ -242,7 +263,7 @@
             return <Loading/>;
         }
         return (
-            <div class="lots">
+            <div className="lots">
                 {lots.map(lot => <Lot lot={lot} key={lot.id}/>)}
             </div>
         )
