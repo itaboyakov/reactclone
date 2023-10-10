@@ -11,21 +11,21 @@
 <body>
     <div id="root"></div>
 </body>
-  <script>
-//  <script type="text/jsx"> 
+  <!-- <script> -->
+ <script type="text/jsx"> 
   
+    const initialState = {
+        time: new Date(),
+        lots: null
+    }
     class Store {
-        constructor(initialState) {
-            this.state = initialState;
-            this.listeners = []
+        constructor(reducer, initialState) {
+            this.reducer = reducer;
+            this.state = reducer(initialState, {type: null});
+            this.listeners = [];
         }
         getState() {
             return this.state
-        }
-        setState(state) {
-            this.state = (typeof state === 'function' ? state(this.state) : state)
-            
-            this.listeners.forEach(listener => listener())
         }
         subscribe (listener) {
             this.listeners.push(listener);
@@ -34,12 +34,13 @@
                 this.listeners.splice(index,1);
             }
         }
+        dispatch (action) {
+            this.state = this.reducer(this.state, action);
+            this.listeners.forEach(listener => listener())
+        }
     }
-    const initialState = {
-        time: new Date(),
-        lots: null
-    }
-    const store = new Store(initialState);
+  
+    const store = new Store(appReducer);
 
     const VDom = {
         createElement: (type, config, ...children) => {
@@ -105,20 +106,22 @@
         renderView(store.getState())
     })
     renderView(store.getState());
-
-    function appReducer(state, action) {
+    const SET_TIME = 'SET_TIME';
+    const SET_LOTS = 'SET_LOTS';
+    const CHANGE_LOT_PRICE = 'CHANGE_LOT_PRICE';
+    function appReducer(state = initialState, action) {
         switch (action.type) {
-            case 'setTime':
+            case SET_TIME:
                 return {
                     ...state,
                     time: action.time
                 }
-            case 'setLots':
+            case SET_LOTS:
                 return {
                     ...state,
                     lots: action.lots
                 }
-            case 'changeLotPrice':
+            case CHANGE_LOT_PRICE:
                 return {
                     ...state,
                     lots: state.lots.map((lot) => {
@@ -135,19 +138,35 @@
         }
         
     }
+    function setTime(time) {
+        return {
+            type: 'SET_TIME',
+            time
+        }
+    };
+    function setLots(lots) {
+        return {
+            type: 'SET_LOTS',
+            lots
+        }
+    }
+    function changeLotPrice(id, price) {
+        return {
+            type: 'CHANGE_LOT_PRICE',
+            id,
+            price
+        }
+    }
+
     setInterval(() => {
-        store.setState((state) => appReducer(state, {type: 'setTime', time: new Date() }))
+        store.dispatch(setTime(new Date()))
     }, 1000)
 
     api.get('/lots').then((lots) => {
-        store.setState((state) => appReducer(state, {type: 'setLots', lots}))
+        store.dispatch(setLots(lots));
         lots.forEach(lot => {
             stream.subscribe(`price-${lot.id}`, (data) => {
-                store.setState((state) => appReducer(state, {
-                    type: 'changeLotPrice',
-                    id: data.id, 
-                    price: data.price
-                }));
+                store.dispatch( changeLotPrice(data.id, data.price));
             })
         })
     }).catch(err => console.log(err))
