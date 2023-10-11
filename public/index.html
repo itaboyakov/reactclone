@@ -14,10 +14,13 @@
   <!-- <script> -->
  <script type="text/jsx"> 
   
-    const initialState = {
+    const clockInitialState = {
         time: new Date(),
+    }
+    const auctionInitialState = {
         lots: null
     }
+
     class Store {
         constructor(reducer, initialState) {
             this.reducer = reducer;
@@ -40,7 +43,10 @@
         }
     }
   
-    const store = new Store(appReducer);
+    const store = new Store(combineReducers({
+        clock: clockReducer,
+        auction: auctionReducer
+    }));
 
     const VDom = {
         createElement: (type, config, ...children) => {
@@ -109,13 +115,28 @@
     const SET_TIME = 'SET_TIME';
     const SET_LOTS = 'SET_LOTS';
     const CHANGE_LOT_PRICE = 'CHANGE_LOT_PRICE';
-    function appReducer(state = initialState, action) {
+
+    function combineReducers (reducers) {
+        return (state = {}, action) => {
+            const result = {};
+            Object.entries(reducers).forEach(([key, reducer])=> {
+                result[key] = reducer(state[key], action)
+            })
+            return result
+        }
+    }
+    function clockReducer(state = clockInitialState, action) {
         switch (action.type) {
             case SET_TIME:
                 return {
                     ...state,
                     time: action.time
                 }
+            default: return state 
+        } 
+    }
+    function auctionReducer(state = auctionInitialState, action) {
+        switch (action.type) {
             case SET_LOTS:
                 return {
                     ...state,
@@ -175,8 +196,8 @@
         return (
             <div className="app">
                 <Header/>
-                <Clock time={state.time}/>
-                <Lots lots={state.lots}/>
+                <Clock time={state.clock.time}/>
+                <Lots lots={state.auction.lots}/>
             </div>
         )
     }
