@@ -59,17 +59,39 @@
     width: 30%;
     display: block;
 }
+.lot.favorite {
+    border-color: #ffd7cb;
+    background: #ffd7cb;
+}
+
+button {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 4px 6px;
+    outline: none;
+    font-size: 0.8rem;
+}
+button * {
+    vertical-align: middle;
+}
 .lot {
-    display: flex; 
-    flex-direction: column; 
-    justify-content: space-between;
-    height: 50px;
+    height: 80px;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 10px;
     box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     padding: 10px;
     position: relative;
+}
+button.favorite {
+    background: #fff;
+    border: 1px solid #999;
+    color: #000;
+}
+button.unfavorite {
+    background: #fff;
+    border: 1px solid #ff8c68;
+    color: #dc0000;
 }
 h1 {
    margin: 0; 
@@ -80,6 +102,6 @@ p {
 .price {
     position: absolute;
     right: 20px;  
-    margin-top: 15px;
+    margin: 15px;
     font-weight: 600;
 }
