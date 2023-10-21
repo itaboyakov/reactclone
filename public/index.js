@@ -1,9 +1,9 @@
 const clockInitialState = {
     time: new Date(),
-}
+};
 const auctionInitialState = {
-    lots: null
-}
+    lots: null,
+};
 
 const SET_TIME = 'SET_TIME';
 const SET_LOTS = 'SET_LOTS';
@@ -18,24 +18,24 @@ class Store {
         this.listeners = [];
     }
     getState() {
-        return this.state
+        return this.state;
     }
-    subscribe (listener) {
+    subscribe(listener) {
         this.listeners.push(listener);
         return () => {
             const index = this.listeners.inexOf(listener);
-            this.listeners.splice(index,1);
-        }
+            this.listeners.splice(index, 1);
+        };
     }
-    dispatch (action) {
+    dispatch(action) {
         this.state = this.reducer(this.state, action);
-        this.listeners.forEach(listener => listener())
+        this.listeners.forEach((listener) => listener());
     }
 }
 
 const store = new Store(combineReducers({
     clock: clockReducer,
-    auction: auctionReducer
+    auction: auctionReducer,
 }));
 
 const VDom = {
@@ -50,213 +50,216 @@ const VDom = {
         return {
             type,
             key,
-            props
-        }
-    }
-}
+            props,
+        };
+    },
+};
 const api = {
-    get (url) {
+    get(url) {
         switch (url) {
-            case '/lots': return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve( [
+        case '/lots': return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve([
                     {
                         id: 1,
                         name: 'Apple',
                         description: 'Apple description',
                         price: 16,
-                        favorite: true
+                        favorite: true,
                     },
                     {
                         id: 2,
                         name: 'Orange',
                         description: 'Orange description',
                         price: 21,
-                        favorite: false
+                        favorite: false,
                     }
-                ])
-                },1000)
-            })
-            default: throw new Error('Unknown address')
+                ]);
+            }, 1000);
+        });
+        default: throw new Error('Unknown address');
         }
     },
-    post (url) {
+    post(url) {
         if (/^\/lots\/(\d+)\/favorite$/.exec(url)) {
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    resolve({})
-                }, 500)
-            })
+                    resolve({});
+                }, 500);
+            });
         }
         if (/^\/lots\/(\d+)\/unfavorite$/.exec(url)) {
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    resolve({})
-                }, 500)
-            })
+                    resolve({});
+                }, 500);
+            });
         }
-        throw new Error('Unknown address')
-    }
-}
+        throw new Error('Unknown address');
+    },
+};
 const stream = {
-    subscribe (channel, listener) {
+    subscribe(channel, listener) {
         const match = /price-(\d+)/.exec(channel);
         if (match) {
             setInterval(() => {
                 listener({
                     id: parseInt(match[1]),
-                    price: Math.round((Math.random() * 10 + 30))
-                })
-            }, 400)
+                    price: Math.round((Math.random() * 10 + 30)),
+                });
+            }, 400);
         }
-    }
-}
+    },
+};
 
 function renderView(store) {
-    const state = store.getState()
-    const favorite = (id) => {
-        api.post(`/lots/${id}/favorite`).then(() => {
-            store.dispatch(favoriteLot(id));
-        })
-    }
-    const unfavorite = (id) => {
-        api.post(`/lots/${id}/unfavorite`).then(() => {
-            store.dispatch(unfavoriteLot(id));
-        })
-    }
     render(
-        <App state={state} favorite={favorite} unfavorite={unfavorite}/>,
+        <App store={store}/>,
         document.getElementById('root')
     );
 }
 store.subscribe(() => {
-    renderView(store)
-})
+    renderView(store);
+});
 
 renderView(store);
 
-function combineReducers (reducers) {
+function combineReducers(reducers) {
     return (state = {}, action) => {
         const result = {};
-        Object.entries(reducers).forEach(([key, reducer])=> {
-            result[key] = reducer(state[key], action)
-        })
-        return result
-    }
+        Object.entries(reducers).forEach(([key, reducer]) => {
+            result[key] = reducer(state[key], action);
+        });
+        return result;
+    };
 }
 function clockReducer(state = clockInitialState, action) {
     switch (action.type) {
-        case SET_TIME:
-            return {
-                ...state,
-                time: action.time
-            }
-        default: return state 
-    } 
+    case SET_TIME:
+        return {
+            ...state,
+            time: action.time,
+        };
+    default: return state;
+    }
 }
 function auctionReducer(state = auctionInitialState, action) {
     switch (action.type) {
-        case SET_LOTS:
-            return {
-                ...state,
-                lots: action.lots
-            }
-        case CHANGE_LOT_PRICE:
-            return {
-                ...state,
-                lots: state.lots.map((lot) => {
-                    if (lot.id === action.id) {
-                        return {
-                            ...lot,
-                            price: action.price
-                        }
-                    }
-                    return lot
-                })
-            }
-        case FAVORITE_LOT:
-            return {
-                ...state,
-                lots: state.lots.map((lot) => {
-                    if (lot.id === action.id) {
-                        return {
-                            ...lot,
-                            favorite: true
-                        }
-                    }
-                    return lot
-                })
-            }
-        case UNFAVORITE_LOT:
-            return {
-                ...state,
-                lots: state.lots.map((lot) => {
-                    if (lot.id === action.id) {
-                        return {
-                            ...lot,
-                            favorite: false
-                        }
-                    }
-                    return lot
-                })
-            }
-        default: return state 
+    case SET_LOTS:
+        return {
+            ...state,
+            lots: action.lots,
+        };
+    case CHANGE_LOT_PRICE:
+        return {
+            ...state,
+            lots: state.lots.map((lot) => {
+                if (lot.id === action.id) {
+                    return {
+                        ...lot,
+                        price: action.price,
+                    };
+                }
+                return lot;
+            }),
+        };
+    case FAVORITE_LOT:
+        return {
+            ...state,
+            lots: state.lots.map((lot) => {
+                if (lot.id === action.id) {
+                    return {
+                        ...lot,
+                        favorite: true,
+                    };
+                }
+                return lot;
+            }),
+        };
+    case UNFAVORITE_LOT:
+        return {
+            ...state,
+            lots: state.lots.map((lot) => {
+                if (lot.id === action.id) {
+                    return {
+                        ...lot,
+                        favorite: false,
+                    };
+                }
+                return lot;
+            }),
+        };
+    default: return state;
     }
-    
 }
 function setTime(time) {
     return {
         type: SET_TIME,
-        time
-    }
+        time,
+    };
 };
 function setLots(lots) {
     return {
         type: SET_LOTS,
-        lots
-    }
+        lots,
+    };
 }
 function changeLotPrice(id, price) {
     return {
         type: CHANGE_LOT_PRICE,
         id,
-        price
-    }
+        price,
+    };
 }
 function favoriteLot(id) {
     return {
         type: FAVORITE_LOT,
-        id
-    }
+        id,
+    };
 };
 function unfavoriteLot(id) {
     return {
         type: UNFAVORITE_LOT,
-        id
-    }
+        id,
+    };
 };
 
 setInterval(() => {
-    store.dispatch(setTime(new Date()))
-}, 1000)
+    store.dispatch(setTime(new Date()));
+}, 1000);
 
 api.get('/lots').then((lots) => {
     store.dispatch(setLots(lots));
-    lots.forEach(lot => {
+    lots.forEach((lot) => {
         stream.subscribe(`price-${lot.id}`, (data) => {
-            store.dispatch( changeLotPrice(data.id, data.price));
-        })
-    })
-}).catch(err => console.log(err))
+            store.dispatch(changeLotPrice(data.id, data.price));
+        });
+    });
+}).catch((err) => console.log(err));
 
-function App({state,favorite, unfavorite}) {
+function App({store}) {
+    const state = store.getState();
+    const dispatch = store.dispatch;
+    const lots = state.auction.lots;
+    const time = state.clock.time;
+
+    const favorite = (id) => {
+        api.post(`/lots/${id}/favorite`).then(() => {
+            dispatch(favoriteLot(id));
+        });
+    };
+    const unfavorite = (id) => {
+        api.post(`/lots/${id}/unfavorite`).then(() => {
+            dispatch(unfavoriteLot(id));
+        });
+    };
     return (
         <div className="app">
             <Header/>
-            <Clock time={state.clock.time}/>
-            <Lots lots={state.auction.lots} favorite={favorite} unfavorite={unfavorite}/>
+            <Clock time={time}/>
+            <Lots lots={lots} favorite={favorite} unfavorite={unfavorite}/>
         </div>
-    )
+    );
 }
 
 function render(virtualDom, realDomRoot) {
@@ -269,9 +272,9 @@ function render(virtualDom, realDomRoot) {
             ...realDomRoot.attributes,
             children: [
                 evaluatedVirtualDom
-            ]
-        }
-    }
+            ],
+        },
+    };
     sync(virtualDomRoot, realDomRoot);
 }
 
@@ -281,9 +284,9 @@ function sync(virtualNode, realNode) {
             if (name !== 'children' && name !== 'key' && realNode[name] !== value) {
                 realNode[name] = value;
             }
-        })
+        });
     }
-    
+
     if (virtualNode.key) {
         realNode.dataset.key = virtualNode.key;
     }
@@ -298,21 +301,21 @@ function sync(virtualNode, realNode) {
     for (let i = 0; i< virtualChildren.length || i < realChildren.length; i++) {
         const virtual = virtualChildren[i];
         const real = realChildren[i];
-        //Remove
+        // Remove
         if (virtual === undefined && real !== undefined) {
             realNode.remove(real);
         }
-        //Update
+        // Update
         if (virtual !== undefined && real !== undefined && (virtual.type || '') === (real.tagName || '').toLowerCase()) {
             sync(virtual, real);
         }
-        //Replace
+        // Replace
         if (virtual !== undefined && real !== undefined && (virtual.type || '') !== (real.tagName || '').toLowerCase()) {
             const newReal = createRealNodeByVirtual(virtual);
             sync(virtual, newReal);
             realNode.replaceChild(newReal, real);
         }
-        //Add
+        // Add
         if (virtual !== undefined && real === undefined) {
             const newReal = createRealNodeByVirtual(virtual);
             sync(virtual, newReal);
@@ -322,54 +325,54 @@ function sync(virtualNode, realNode) {
 }
 function evaluate(virtualNode) {
     if (typeof virtualNode !== 'object') {
-        return virtualNode
+        return virtualNode;
     }
     if (typeof virtualNode.type === 'function') {
-        return evaluate((virtualNode.type)(virtualNode.props))
+        return evaluate((virtualNode.type)(virtualNode.props));
     }
-    const props = virtualNode.props || {}
+    const props = virtualNode.props || {};
     return {
         ...virtualNode,
         props: {
             ...props,
-            children: Array.isArray(props.children) ? props.children.map(evaluate) : [evaluate(props.children)]
-        }
-    }
+            children: Array.isArray(props.children) ? props.children.map(evaluate) : [evaluate(props.children)],
+        },
+    };
 }
 function createRealNodeByVirtual(virtualNode) {
     if (typeof virtualNode !== 'object') {
         return document.createTextNode('');
-    } 
+    }
     return document.createElement(virtualNode.type);
 }
 
 function Loading() {
-    return <div class="loading">Loading...</div>
+    return <div className="loading">Loading...</div>;
 }
 function Logo() {
-    return <img className= "logo" src = "logo.png"/>
+    return <img className= "logo" src = "logo.png"/>;
 }
 
 function Header() {
     return (
-         <header className='header'>
-        <Logo/>
-    </header>
-    )
+        <header className='header'>
+            <Logo/>
+        </header>
+    );
 }
 
 function Clock({time}) {
-    const isDay = time.getHours() >= 7 && time.getHours()<=21
+    const isDay = time.getHours() >= 7 && time.getHours()<=21;
     return (
         <div className='clock'>
-            <span class="value">{time.toLocaleTimeString()}</span>
+            <span className="value">{time.toLocaleTimeString()}</span>
             <span className={isDay ? 'icon day' : 'icon night'}/>
         </div>
-    )
+    );
     return VDom.createElement('div', {className: 'clock'}, [
         VDom.createElement('span', {className: 'value'}, time.toLocaleTimeString()),
         VDom.createElement('span', {className: isDay ? 'icon day' : 'icon night'})
-    ])
+    ]);
 }
 
 function Lots({lots, favorite, unfavorite}) {
@@ -378,22 +381,22 @@ function Lots({lots, favorite, unfavorite}) {
     }
     return (
         <div className="lots">
-            {lots.map(lot => <Lot lot={lot} favorite={favorite} unfavorite={unfavorite} key={lot.id}/>)}
+            {lots.map((lot) => <Lot lot={lot} favorite={favorite} unfavorite={unfavorite} key={lot.id}/>)}
         </div>
-    )
+    );
 }
 function Favorite({active, favorite, unfavorite}) {
     return active ? (
-        <button  onClick={unfavorite} className="unfavorite">
+        <button onClick={unfavorite} className="unfavorite">
             {/* <ion-icon name="heart-dislike-outline"/> */}
             Unfavorite
         </button>
     ) : (
-        <button  className="favorite" onClick={favorite}>
+        <button className="favorite" onClick={favorite}>
             {/* <ion-icon name="heart-outline"/> */}
             Favorite
         </button>
-    )
+    );
 }
 function Lot({lot, favorite, unfavorite}) {
     return (
@@ -401,18 +404,18 @@ function Lot({lot, favorite, unfavorite}) {
             <div className="price">{lot.price}</div>
             <h1>{lot.name}</h1>
             <p>{lot.description}</p>
-            <Favorite 
-                active={lot.favorite} 
-                favorite={() => favorite(lot.id)} 
+            <Favorite
+                active={lot.favorite}
+                favorite={() => favorite(lot.id)}
                 unfavorite={() => unfavorite(lot.id)}/>
         </article>
-        
-    ) 
+
+    );
     return VDom.createElement('article', {className: 'lot'}, [
         VDom.createElement('div', {className: 'price'}, lot.price),
         VDom.createElement('h1', {}, lot.name),
-        Favorite({active:lot.favorite ,
-            favorite:() => favorite(lot.id) ,
-            unfavorite:() => unfavorite(lot.id)})
-    ])
+        Favorite({active: lot.favorite,
+            favorite: () => favorite(lot.id),
+            unfavorite: () => unfavorite(lot.id)})
+    ]);
 }
