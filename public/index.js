@@ -38,6 +38,8 @@ const store = new Store(combineReducers({
     auction: auctionReducer,
 }));
 
+const StoreContext = React.createContext();
+
 const VDom = {
     createElement: (type, config, ...children) => {
         const key = (config && config.key) || null;
@@ -113,8 +115,10 @@ const stream = {
 };
 
 function renderView(store) {
-    render(
-        <App store={store}/>,
+    ReactDOM.render(
+        <StoreContext.Provider value={store}>
+            <App/>,
+        </StoreContext.Provider>,
         document.getElementById('root')
     );
 }
@@ -237,28 +241,14 @@ api.get('/lots').then((lots) => {
     });
 }).catch((err) => console.log(err));
 
-function App({store}) {
-    const state = store.getState();
-    const dispatch = store.dispatch;
-    const lots = state.auction.lots;
-    const time = state.clock.time;
-
-    const favorite = (id) => {
-        api.post(`/lots/${id}/favorite`).then(() => {
-            dispatch(favoriteLot(id));
-        });
-    };
-    const unfavorite = (id) => {
-        api.post(`/lots/${id}/unfavorite`).then(() => {
-            dispatch(unfavoriteLot(id));
-        });
-    };
+function App() {
     return (
         <div className="app">
             <Header/>
-            <Clock time={time}/>
-            <Lots lots={lots} favorite={favorite} unfavorite={unfavorite}/>
+            <ClockConnected />
+            <LotsConnected />
         </div>
+
     );
 }
 
@@ -296,7 +286,7 @@ function sync(virtualNode, realNode) {
     }
 
     const virtualChildren = virtualNode.props ? virtualNode.props.children || [] : [];
-    // const virtualChildren = virtualNode.props?.children || [];
+
     const realChildren = realNode.childNodes;
     for (let i = 0; i< virtualChildren.length || i < realChildren.length; i++) {
         const virtual = virtualChildren[i];
@@ -360,7 +350,17 @@ function Header() {
         </header>
     );
 }
-
+function ClockConnected() {
+    return (
+        <StoreContext.Consumer>
+            {(store) => {
+                const state = store.getState();
+                const time = state.clock.time;
+                return <Clock time={time} />;
+            }}
+        </StoreContext.Consumer>
+    );
+}
 function Clock({time}) {
     const isDay = time.getHours() >= 7 && time.getHours()<=21;
     return (
@@ -375,28 +375,58 @@ function Clock({time}) {
     ]);
 }
 
-function Lots({lots, favorite, unfavorite}) {
+function LotsConnected() {
+    return (
+        <StoreContext.Consumer>
+            {(store) => {
+                const state = store.getState();
+                const lots = state.auction.lots;
+                return <Lots lots={lots}/>;
+            }}
+        </StoreContext.Consumer>);
+}
+
+function Lots({lots}) {
     if (lots === null) {
         return <Loading/>;
     }
     return (
         <div className="lots">
-            {lots.map((lot) => <Lot lot={lot} favorite={favorite} unfavorite={unfavorite} key={lot.id}/>)}
+            {lots.map((lot) => <LotConnected lot={lot} key={lot.id}/>)}
         </div>
     );
 }
 function Favorite({active, favorite, unfavorite}) {
     return active ? (
         <button onClick={unfavorite} className="unfavorite">
-            {/* <ion-icon name="heart-dislike-outline"/> */}
+            <ion-icon name="heart-dislike-outline"/>
             Unfavorite
         </button>
     ) : (
         <button className="favorite" onClick={favorite}>
-            {/* <ion-icon name="heart-outline"/> */}
+            <ion-icon name="heart-outline"/>
             Favorite
         </button>
     );
+}
+function LotConnected({lot}) {
+    return (
+        <StoreContext.Consumer>
+            {(store) => {
+                const dispatch = store.dispatch;
+                const favorite = (id) => {
+                    api.post(`/lots/${id}/favorite`).then(() => {
+                        dispatch(favoriteLot(id));
+                    });
+                };
+                const unfavorite = (id) => {
+                    api.post(`/lots/${id}/unfavorite`).then(() => {
+                        dispatch(unfavoriteLot(id));
+                    });
+                };
+                return <Lot lot={lot} favorite={favorite} unfavorite={unfavorite}/>;
+            }}
+        </StoreContext.Consumer>);
 }
 function Lot({lot, favorite, unfavorite}) {
     return (
